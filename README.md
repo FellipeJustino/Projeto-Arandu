@@ -31,3 +31,8 @@ Abaixo estão descritos sucintamente os diagramas que compõem a especificação
 * **Backend:** Node.js (API REST com arquitetura MVC)
 * **Banco de Dados:** PostgreSQL (SGBD Relacional)
 * **Protocolos & Segurança:** HTTPS, TCP/IP e Servidor Dedicado de Firewall
+
+* 💻 **Contribuidores**
+* Fellipe: Diagramas de Estado e Github
+* Eduardo: Diagramas de Sequência e diagrama de Implantação
+* Arthur: Diagrama de Classe com padrões de projeto(Singleton, DAO,Factory,Observer e MVC) e Prototipação com interfaces
