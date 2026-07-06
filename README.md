@@ -32,6 +32,8 @@ Abaixo estão descritos sucintamente os diagramas que compõem a especificação
 * **Banco de Dados:** PostgreSQL (SGBD Relacional)
 * **Protocolos & Segurança:** HTTPS, TCP/IP e Servidor Dedicado de Firewall
 
+---
+
 * 💻 **Contribuidores**
 * Fellipe: Diagramas de Estado e Github
 * Eduardo: Diagramas de Sequência e diagrama de Implantação
