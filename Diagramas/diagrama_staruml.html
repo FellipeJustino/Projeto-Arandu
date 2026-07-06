@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagrama de Classes — E-commerce com Assinaturas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1a2e;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;height:100vh;width:100vw}
+
+/* ── TOOLBAR ── */
+#toolbar{
+  position:fixed;top:0;left:0;right:0;height:48px;
+  background:#0f0f1a;border-bottom:1px solid #2a2a4a;
+  display:flex;align-items:center;padding:0 16px;gap:12px;z-index:100
+}
+#toolbar h1{font-size:13px;font-weight:600;color:#e0e0f0;margin-right:8px}
+#toolbar span{font-size:11px;color:#666;margin-right:12px}
+.tbtn{
+  padding:5px 12px;border-radius:5px;border:1px solid #2a2a4a;
+  background:#1a1a2e;color:#aaa;font-size:12px;cursor:pointer;transition:all .15s
+}
+.tbtn:hover{background:#252540;color:#e0e0f0;border-color:#4a4a8a}
+#zoom-val{font-size:12px;color:#888;min-width:40px;text-align:center}
+
+/* ── LEGEND ── */
+#legend{
+  position:fixed;bottom:16px;left:16px;
+  background:#0f0f1a;border:1px solid #2a2a4a;border-radius:8px;
+  padding:12px 16px;z-index:100
+}
+#legend h4{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.leg-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;color:#888}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.leg-line{width:24px;height:2px;flex-shrink:0}
+.leg-dashed{width:24px;height:0;border-top:2px dashed #888;flex-shrink:0}
+
+/* ── CANVAS ── */
+#viewport{position:fixed;top:48px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab}
+#viewport.grabbing{cursor:grabbing}
+#canvas{position:absolute;top:0;left:0;transform-origin:0 0}
+#svg-layer{position:absolute;top:0;left:0;pointer-events:none}
+
+/* ── UML CLASS BOX ── */
+.uml-class{
+  position:absolute;
+  background:#ffffff;
+  border:1.5px solid #333;
+  border-radius:0;
+  font-family:'Courier New',monospace;
+  font-size:11.5px;
+  min-width:160px;
+  box-shadow:2px 2px 8px rgba(0,0,0,.5);
+  user-select:none;
+}
+.uml-class.selected{border-color:#4a90e2;box-shadow:0 0 0 2px #4a90e2,2px 2px 8px rgba(0,0,0,.5)}
+
+.uml-head{
+  padding:4px 8px;
+  text-align:center;
+  font-weight:700;
+  font-size:12px;
+  border-bottom:1.5px solid #333;
+  background:#ddeeff;
+  cursor:move;
+  line-height:1.4;
+}
+.uml-head .stereotype{
+  display:block;font-weight:400;font-style:italic;font-size:10px;color:#444
+}
+.uml-head .classname{display:block;font-weight:700;color:#000}
+
+.uml-attrs{
+  padding:4px 8px;
+  border-bottom:1.5px solid #333;
+  background:#fff;
+  min-height:22px;
+}
+.uml-methods{
+  padding:4px 8px;
+  background:#fff;
+  min-height:22px;
+}
+.uml-row{
+  display:block;
+  white-space:nowrap;
+  line-height:1.55;
+  font-size:11px;
+  color:#111;
+}
+.uml-row .vis{margin-right:2px;font-weight:700}
+.uml-row .vis.pub{color:#0a7a0a}
+.uml-row .vis.priv{color:#cc0000}
+.uml-row .static-u{text-decoration:underline}
+
+/* ── PATTERN HEADER COLORS ── */
+.h-singleton{background:#c8b8f8}
+.h-factory  {background:#b8f0e0}
+.h-dao      {background:#f8c8c0}
+.h-observer {background:#f8e8a0}
+.h-mvc      {background:#b8d8f8}
+.h-interface{background:#e8e8e8}
+.h-domain   {background:#ddeeff}
+
+.badge{
+  display:inline-block;font-size:9px;font-weight:700;
+  padding:1px 5px;border-radius:3px;margin-left:4px;
+  vertical-align:middle;letter-spacing:.04em
+}
+.bd-singleton{background:#7c6af7;color:#fff}
+.bd-factory  {background:#0a9e7a;color:#fff}
+.bd-dao      {background:#cc3322;color:#fff}
+.bd-observer {background:#b08800;color:#fff}
+.bd-mvc      {background:#1a6ec0;color:#fff}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h1>Diagrama de Classes — E-commerce com Assinaturas</h1>
+  <span>Fellipe Justino · Arthur Pimentel · Eduardo</span>
+  <button class="tbtn" onclick="zoomBy(.2)">+ Zoom</button>
+  <span id="zoom-val">100%</span>
+  <button class="tbtn" onclick="zoomBy(-.2)">− Zoom</button>
+  <button class="tbtn" onclick="resetView()">Resetar</button>
+  <button class="tbtn" onclick="fitAll()">Ver tudo</button>
+</div>
+
+<div id="legend">
+  <h4>Legenda</h4>
+  <div class="leg-row"><div class="leg-dot" style="background:#c8b8f8"></div>Singleton</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#b8f0e0"></div>Factory</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#f8c8c0"></div>DAO</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#f8e8a0"></div>Observer / Subject</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#b8d8f8"></div>MVC · Controller</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#ddeeff"></div>Domínio</div>
+  <div class="leg-row"><div class="leg-line" style="background:#333"></div>Associação</div>
+  <div class="leg-row"><div class="leg-line" style="background:#333;height:3px"></div>Herança</div>
+  <div class="leg-row"><div class="leg-dashed"></div>Dependência</div>
+</div>
+
+<div id="viewport">
+  <div id="canvas">
+    <svg id="svg-layer" width="4000" height="3400"></svg>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DADOS DAS CLASSES
+// ═══════════════════════════════════════════════════════════════
+const CLASSES = [
+
+  // ── DOMÍNIO ──────────────────────────────────────────────────
+  {id:'Usuario', x:340, y:80, hcls:'h-domain',
+   stereotype:null, name:'Usuario',
+   attrs:['+id: int','+nome: string','+email: string','+senha: string','+telefone: string','+dataCadastro: date','+status: string'],
+   methods:['+cadastrar()','+autenticar()','+alterarDados()','+recuperarSenha()','+logout()']},
+
+  {id:'Administrador', x:80, y:420, hcls:'h-domain',
+   stereotype:null, name:'Administrador',
+   attrs:['+id: int','+cargo: string'],
+   methods:['+CRUD()','+gerenciarProdutos()','+gerenciarPedidos()','+gerenciarUsuarios()','+gerenciarAssinaturas()','+vizualizarRelatorios()']},
+
+  {id:'Cliente', x:500, y:420, hcls:'h-domain',
+   stereotype:null, name:'Cliente',
+   attrs:['+id: int','+cpf: string','+dataNascimento: date','+enderecoPadrao: string'],
+   methods:['+visualizarPedidos()','+gerenciarAssinaturas()']},
+
+  {id:'Endereco', x:80, y:760, hcls:'h-domain',
+   stereotype:null, name:'Endereco',
+   attrs:['+id: int','+numero: string','+complemento: string','+bairro: string','+cidade: string','+estado: string','+cep: string'],
+   methods:['+validarEndereco()']},
+
+  {id:'Produto', x:860, y:80, hcls:'h-domain',
+   stereotype:null, name:'Produto',
+   attrs:['+id: int','+nome: string','+descricao: string','+preco: int','+estoque: int','+imagemProduto: string','+disponivel: boolean','+categoria: string'],
+   methods:['+CRUD()','+alterarEstoque()']},
+
+  {id:'Categoria', x:1160, y:80, hcls:'h-domain',
+   stereotype:null, name:'Categoria',
+   attrs:['+id: int','+nome: string','+descricao: string'],
+   methods:[]},
+
+  {id:'Carrinho', x:500, y:760, hcls:'h-domain',
+   stereotype:null, name:'Carrinho',
+   attrs:['+id: int','+dataCriacao: date','+status: string','+valorTotal: int'],
+   methods:['+calcularTotal()']},
+
+  {id:'ItemCarrinho', x:500, y:1020, hcls:'h-domain',
+   stereotype:null, name:'ItemCarrinho',
+   attrs:['+id: int','+quantidade: int','+precoUnitario: int','+subtotal: int'],
+   methods:['+calcularSubtotal()']},
+
+  {id:'ItemPedido', x:860, y:420, hcls:'h-domain',
+   stereotype:null, name:'item-pedido',
+   attrs:['+id: int','+nome: string','+descricao: string','+dataDeEncomenda: date'],
+   methods:[]},
+
+  {id:'Frete', x:860, y:760, hcls:'h-domain',
+   stereotype:null, name:'Frete',
+   attrs:['+id: int','+valor: int','+prazoEntrega: int','+dataCalculo: int'],
+   methods:[]},
+
+  {id:'Pagamento', x:1160, y:580, hcls:'h-domain',
+   stereotype:null, name:'Pagamento',
+   attrs:['+id: int','+formaPagamento: string','+status: string','+valor: int','+dataPagamento: date'],
+   methods:['+processarPagamento()','+confirmarPagamento()','+estornarPagamento()']},
+
+  {id:'HistoricoPedido', x:1460, y:760, hcls:'h-observer',
+   stereotype:'«Observer»', name:'HistoricoPedido',
+   badge:{text:'OBSERVER',cls:'bd-observer'},
+   attrs:['+id: int','+status: string','+observacao: string','+dataAlteracao: string'],
+   methods:['+atualizar(evento)','+registrarAlteracao()']},
+
+  {id:'Assinatura', x:1760, y:580, hcls:'h-domain',
+   stereotype:null, name:'Assinatura',
+   attrs:['+id: int','+plano: string','+preco: int','+frequencia: string','+dataInicio: date','+dataFim: date','+status: string'],
+   methods:['+criarAssinatura()','+cancelarAssinatura()','+alterarPlano()']},
+
+  {id:'EntregaAssinatura', x:1760, y:920, hcls:'h-domain',
+   stereotype:null, name:'EntregaAssinatura',
+   attrs:['+id: int','+dataPrevista: date','+status: string','+observacao: string'],
+   methods:['+marcarComoEnviada()']},
+
+  // ── PEDIDO (Observer Subject) ─────────────────────────────────
+  {id:'Pedido', x:1100, y:420, hcls:'h-observer',
+   stereotype:'«Subject»', name:'Pedido',
+   badge:{text:'OBSERVER',cls:'bd-observer'},
+   attrs:['+id: int','+dataPedido: date','+valorProdutos: int','+valorFrete: int','+valorTotal: int'],
+   methods:['+assinar(obs: IObserver)','+atualizarStatus(s)','+calcularTotal()','+visualizarStatus()','-notificar(evento)']},
+
+  // ── SINGLETON ─────────────────────────────────────────────────
+  {id:'EstoqueManager', x:600, y:200, hcls:'h-singleton',
+   stereotype:'«Singleton»', name:'EstoqueManager',
+   badge:{text:'SINGLETON',cls:'bd-singleton'},
+   attrs:['-instancia: EstoqueManager {static}','-estoques: Map','-EstoqueManager()'],
+   methods:['+getInstance(): EstoqueManager {static}','+alterarEstoque(id, qtd)','+consultarEstoque(id): int','+restaurar(itens)']},
+
+  {id:'APIPagamento', x:1460, y:540, hcls:'h-singleton',
+   stereotype:'«Singleton»', name:'APIPagamento',
+   badge:{text:'SINGLETON',cls:'bd-singleton'},
+   attrs:['-instancia: APIPagamento {static}','+nome: string','+url: string'],
+   methods:['+getInstance(): APIPagamento {static}','+processarPagamento()']},
+
+  {id:'APIEntrega', x:860, y:1000, hcls:'h-singleton',
+   stereotype:'«Singleton»', name:'APIEntrega',
+   badge:{text:'SINGLETON',cls:'bd-singleton'},
+   attrs:['-instancia: APIEntrega {static}','+nome: string','+url: string'],
+   methods:['+getInstance(): APIEntrega {static}','+calcularFrete()','+rastrearEntrega()']},
+
+  // ── FACTORY ───────────────────────────────────────────────────
+  {id:'IPagamento', x:1760, y:200, hcls:'h-interface',
+   stereotype:'«interface»', name:'IPagamento',
+   attrs:[],
+   methods:['+processar(valor)','+confirmar(): boolean','+estornar()']},
+
+  {id:'PagamentoFactory', x:1760, y:380, hcls:'h-factory',
+   stereotype:'«Factory»', name:'PagamentoFactory',
+   badge:{text:'FACTORY',cls:'bd-factory'},
+   attrs:[],
+   methods:['+criar(forma): IPagamento {static}']},
+
+  {id:'PagamentoCartao', x:1540, y:200, hcls:'h-factory',
+   stereotype:'implements IPagamento', name:'PagamentoCartao',
+   attrs:[],
+   methods:['+processar(valor)','+confirmar(): boolean','+estornar()']},
+
+  {id:'PagamentoPix', x:1760, y:40, hcls:'h-factory',
+   stereotype:'implements IPagamento', name:'PagamentoPix',
+   attrs:[],
+   methods:['+processar(valor)','+confirmar(): boolean','+estornar()']},
+
+  {id:'PagamentoBoleto', x:2020, y:200, hcls:'h-factory',
+   stereotype:'implements IPagamento', name:'PagamentoBoleto',
+   attrs:[],
+   methods:['+processar(valor)','+confirmar(): boolean','+estornar()']},
+
+  // ── OBSERVER INTERFACE + OBSERVERS ───────────────────────────
+  {id:'IObserver', x:1460, y:280, hcls:'h-interface',
+   stereotype:'«interface»', name:'IObserver',
+   attrs:[],
+   methods:['+atualizar(evento)']},
+
+  {id:'EstoqueObserver', x:1160, y:1020, hcls:'h-observer',
+   stereotype:'«Observer»', name:'EstoqueObserver',
+   badge:{text:'OBSERVER',cls:'bd-observer'},
+   attrs:[],
+   methods:['+atualizar(evento)']},
+
+  {id:'NotificacaoObserver', x:1460, y:1020, hcls:'h-observer',
+   stereotype:'«Observer»', name:'NotificacaoObserver',
+   badge:{text:'OBSERVER',cls:'bd-observer'},
+   attrs:[],
+   methods:['+atualizar(evento)']},
+
+  // ── DAO ───────────────────────────────────────────────────────
+  {id:'IBaseDAO', x:2340, y:80, hcls:'h-interface',
+   stereotype:'«interface»', name:'IBaseDAO',
+   attrs:[],
+   methods:['+buscarPorId(id): T','+salvar(entidade: T)','+atualizar(entidade: T)','+deletar(id)','+listarTodos(): List<T>']},
+
+  {id:'PedidoDAO', x:2200, y:340, hcls:'h-dao',
+   stereotype:'«DAO»', name:'PedidoDAO',
+   badge:{text:'DAO',cls:'bd-dao'},
+   attrs:[],
+   methods:['+buscarPorId(id)','+salvar(pedido)','+atualizar(pedido)','+deletar(id)','+listarTodos()','+buscarPorCliente(clienteId)','+buscarPorStatus(status)']},
+
+  {id:'ProdutoDAO', x:2400, y:340, hcls:'h-dao',
+   stereotype:'«DAO»', name:'ProdutoDAO',
+   badge:{text:'DAO',cls:'bd-dao'},
+   attrs:[],
+   methods:['+buscarPorId(id)','+salvar(produto)','+atualizar(produto)','+deletar(id)','+listarTodos()','+buscarPorCategoria(cat)','+buscarDisponiveis()']},
+
+  {id:'ClienteDAO', x:2600, y:340, hcls:'h-dao',
+   stereotype:'«DAO»', name:'ClienteDAO',
+   badge:{text:'DAO',cls:'bd-dao'},
+   attrs:[],
+   methods:['+buscarPorId(id)','+salvar(cliente)','+atualizar(cliente)','+deletar(id)','+listarTodos()','+buscarPorCpf(cpf)']},
+
+  // ── MVC CONTROLLERS ───────────────────────────────────────────
+  {id:'PedidoController', x:2200, y:680, hcls:'h-mvc',
+   stereotype:'«Controller»', name:'PedidoController',
+   badge:{text:'MVC',cls:'bd-mvc'},
+   attrs:[],
+   methods:['+realizarPedido(clienteId, itens)','+cancelarPedido(id)','+listarPorCliente(clienteId)']},
+
+  {id:'ProdutoController', x:2400, y:680, hcls:'h-mvc',
+   stereotype:'«Controller»', name:'ProdutoController',
+   badge:{text:'MVC',cls:'bd-mvc'},
+   attrs:[],
+   methods:['+listarProdutos()','+buscarPorCategoria(cat)','+atualizarEstoque(id, qtd)']},
+
+  {id:'UsuarioController', x:2600, y:680, hcls:'h-mvc',
+   stereotype:'«Controller»', name:'UsuarioController',
+   badge:{text:'MVC',cls:'bd-mvc'},
+   attrs:[],
+   methods:['+login(email, senha)','+logout(id)','+cadastrar(dados)']},
+];
+
+// ═══════════════════════════════════════════════════════════════
+// RELACIONAMENTOS
+// ═══════════════════════════════════════════════════════════════
+const RELS = [
+  // Herança
+  {from:'Administrador', to:'Usuario', type:'inherit', label:''},
+  {from:'Cliente',       to:'Usuario', type:'inherit', label:''},
+  // Realizações
+  {from:'PagamentoCartao', to:'IPagamento', type:'realize', label:''},
+  {from:'PagamentoPix',    to:'IPagamento', type:'realize', label:''},
+  {from:'PagamentoBoleto', to:'IPagamento', type:'realize', label:''},
+  {from:'HistoricoPedido', to:'IObserver',  type:'realize', label:''},
+  {from:'EstoqueObserver', to:'IObserver',  type:'realize', label:''},
+  {from:'NotificacaoObserver', to:'IObserver', type:'realize', label:''},
+  {from:'PedidoDAO',   to:'IBaseDAO', type:'realize', label:''},
+  {from:'ProdutoDAO',  to:'IBaseDAO', type:'realize', label:''},
+  {from:'ClienteDAO',  to:'IBaseDAO', type:'realize', label:''},
+  // Associações
+  {from:'Cliente',    to:'Endereco',       type:'assoc', label:'1 possui 1..*'},
+  {from:'Cliente',    to:'Carrinho',       type:'assoc', label:'1 possui 0..1'},
+  {from:'Cliente',    to:'Pedido',         type:'assoc', label:'1..* realiza 1..*'},
+  {from:'Cliente',    to:'Assinatura',     type:'assoc', label:'1 gerencia 0..*'},
+  {from:'Carrinho',   to:'ItemCarrinho',   type:'assoc', label:'1 contem 1..*'},
+  {from:'ItemCarrinho',to:'Produto',       type:'assoc', label:'1..* referencia 1'},
+  {from:'Produto',    to:'Categoria',      type:'assoc', label:'1..* pertence a 1'},
+  {from:'Pedido',     to:'ItemPedido',     type:'assoc', label:'1 contem 1..*'},
+  {from:'Pedido',     to:'Pagamento',      type:'assoc', label:'1 efetua 1'},
+  {from:'Pedido',     to:'Frete',          type:'assoc', label:'1 calcula 1'},
+  {from:'Pedido',     to:'HistoricoPedido',type:'assoc', label:'1 registra 1'},
+  {from:'Pedido',     to:'IObserver',      type:'assoc', label:'notifica 1..*'},
+  {from:'Assinatura', to:'EntregaAssinatura', type:'assoc', label:'1 gera 1..*'},
+  // Dependências
+  {from:'PagamentoFactory', to:'IPagamento',    type:'depend', label:'cria'},
+  {from:'Pagamento',        to:'PagamentoFactory', type:'depend', label:'usa'},
+  {from:'Pagamento',        to:'APIPagamento',  type:'depend', label:'integra'},
+  {from:'Frete',            to:'APIEntrega',    type:'depend', label:'integra'},
+  {from:'EstoqueObserver',  to:'EstoqueManager',type:'depend', label:'aciona'},
+  {from:'Produto',          to:'EstoqueManager',type:'depend', label:'usa'},
+  {from:'PedidoController', to:'PedidoDAO',     type:'depend', label:'usa'},
+  {from:'PedidoController', to:'Pedido',        type:'depend', label:'cria'},
+  {from:'PedidoController', to:'PagamentoFactory', type:'depend', label:'aciona'},
+  {from:'PedidoController', to:'EstoqueManager',type:'depend', label:'consulta'},
+  {from:'ProdutoController',to:'ProdutoDAO',    type:'depend', label:'usa'},
+  {from:'ProdutoController',to:'EstoqueManager',type:'depend', label:'usa'},
+  {from:'UsuarioController',to:'ClienteDAO',    type:'depend', label:'usa'},
+];
+
+// ═══════════════════════════════════════════════════════════════
+// BUILD DOM
+// ═══════════════════════════════════════════════════════════════
+const canvas  = document.getElementById('canvas');
+const svgEl   = document.getElementById('svg-layer');
+const viewport= document.getElementById('viewport');
+
+const nodeMap = {}; // id → {el, data}
+
+function makeClass(d) {
+  const div = document.createElement('div');
+  div.className = 'uml-class';
+  div.id = 'node-' + d.id;
+  div.style.left = d.x + 'px';
+  div.style.top  = d.y + 'px';
+
+  // HEAD
+  const head = document.createElement('div');
+  head.className = 'uml-head ' + d.hcls;
+  if (d.stereotype) {
+    const st = document.createElement('span');
+    st.className = 'stereotype';
+    st.textContent = d.stereotype;
+    head.appendChild(st);
+  }
+  const nm = document.createElement('span');
+  nm.className = 'classname';
+  nm.textContent = d.name;
+  if (d.badge) {
+    const b = document.createElement('span');
+    b.className = 'badge ' + d.badge.cls;
+    b.textContent = d.badge.text;
+    nm.appendChild(b);
+  }
+  head.appendChild(nm);
+  div.appendChild(head);
+
+  // ATTRS
+  const attrs = document.createElement('div');
+  attrs.className = 'uml-attrs';
+  (d.attrs||[]).forEach(a => {
+    const row = document.createElement('span');
+    row.className = 'uml-row';
+    const vis = document.createElement('span');
+    vis.className = 'vis ' + (a[0]==='+' ? 'pub' : a[0]==='-' ? 'priv' : 'prot');
+    vis.textContent = a[0];
+    row.appendChild(vis);
+    const txt = document.createTextNode(a.slice(1));
+    row.appendChild(txt);
+    attrs.appendChild(row);
+  });
+  if (!d.attrs || !d.attrs.length) {
+    attrs.style.minHeight = '10px';
+    attrs.style.padding = '2px 8px';
+  }
+  div.appendChild(attrs);
+
+  // METHODS
+  const meths = document.createElement('div');
+  meths.className = 'uml-methods';
+  (d.methods||[]).forEach(m => {
+    const row = document.createElement('span');
+    row.className = 'uml-row';
+    const vis = document.createElement('span');
+    vis.className = 'vis ' + (m[0]==='+' ? 'pub' : m[0]==='-' ? 'priv' : 'prot');
+    vis.textContent = m[0];
+    row.appendChild(vis);
+    const txt = document.createTextNode(m.slice(1));
+    row.appendChild(txt);
+    meths.appendChild(row);
+  });
+  if (!d.methods || !d.methods.length) {
+    meths.style.minHeight = '10px';
+    meths.style.padding = '2px 8px';
+  }
+  div.appendChild(meths);
+
+  // DRAG
+  makeDraggable(div, d, head);
+
+  canvas.appendChild(div);
+  nodeMap[d.id] = {el: div, data: d};
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DRAGGABLE NODES
+// ═══════════════════════════════════════════════════════════════
+function makeDraggable(div, d, handle) {
+  let dragging = false, ox, oy, startX, startY;
+  handle.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    dragging = true;
+    ox = div.offsetLeft;
+    oy = div.offsetTop;
+    startX = e.clientX;
+    startY = e.clientY;
+    e.stopPropagation();
+    e.preventDefault();
+    document.querySelectorAll('.uml-class').forEach(c=>c.classList.remove('selected'));
+    div.classList.add('selected');
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = (e.clientX - startX) / scale;
+    const dy = (e.clientY - startY) / scale;
+    d.x = ox + dx;
+    d.y = oy + dy;
+    div.style.left = d.x + 'px';
+    div.style.top  = d.y + 'px';
+    drawArrows();
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ARROWS
+// ═══════════════════════════════════════════════════════════════
+function center(d) {
+  const el = nodeMap[d.id]?.el;
+  if (!el) return {x: d.x, y: d.y, w: 160, h: 80};
+  return {
+    x: d.x,
+    y: d.y,
+    w: el.offsetWidth  || 160,
+    h: el.offsetHeight || 80
+  };
+}
+
+function closest(a, b) {
+  // returns best edge point on a toward b
+  const ax = a.x + a.w/2, ay = a.y + a.h/2;
+  const bx = b.x + b.w/2, by = b.y + b.h/2;
+  const dx = bx - ax, dy = by - ay;
+  // check which side
+  const sx = dx / (a.w/2), sy = dy / (a.h/2);
+  if (Math.abs(sx) > Math.abs(sy)) {
+    // left or right
+    if (dx > 0) return {x: a.x + a.w, y: ay};
+    else         return {x: a.x,      y: ay};
+  } else {
+    if (dy > 0) return {x: ax, y: a.y + a.h};
+    else         return {x: ax, y: a.y};
+  }
+}
+
+function drawArrows() {
+  while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+
+  // defs
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+
+  function mkMarker(id, fill, shape) {
+    const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    m.setAttribute('id', id);
+    m.setAttribute('viewBox','0 0 12 12');
+    m.setAttribute('refX','10');
+    m.setAttribute('refY','6');
+    m.setAttribute('markerWidth','8');
+    m.setAttribute('markerHeight','8');
+    m.setAttribute('orient','auto-start-reverse');
+    const p = document.createElementNS('http://www.w3.org/2000/svg', shape==='tri'?'polygon':'path');
+    if (shape==='tri')  p.setAttribute('points','0,0 12,6 0,12');
+    if (shape==='open') p.setAttribute('d','M0,0 L12,6 L0,12');
+    if (shape==='diamond') {p.setAttribute('d','M6,0 L12,6 L6,12 L0,6 Z');}
+    p.setAttribute('fill', fill==='none' ? 'none' : fill);
+    p.setAttribute('stroke', '#333');
+    p.setAttribute('stroke-width','1');
+    m.appendChild(p);
+    defs.appendChild(m);
+  }
+
+  mkMarker('arr-inherit','white','tri');
+  mkMarker('arr-realize','white','tri');
+  mkMarker('arr-assoc',  '#333', 'open');
+  mkMarker('arr-depend', '#333', 'open');
+  svgEl.appendChild(defs);
+
+  RELS.forEach(r => {
+    const an = nodeMap[r.from], bn = nodeMap[r.to];
+    if (!an || !bn) return;
+    const a = center(an.data), b = center(bn.data);
+    const p1 = closest(a, b), p2 = closest(b, a);
+
+    const isInherit = r.type==='inherit';
+    const isRealize = r.type==='realize';
+    const isDep     = r.type==='depend';
+    const isAssoc   = r.type==='assoc';
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+    line.setAttribute('stroke','#333');
+    line.setAttribute('stroke-width', isInherit ? '2' : '1.5');
+
+    if (isRealize || isDep) line.setAttribute('stroke-dasharray', isRealize ? '8 4' : '5 3');
+
+    if (isInherit || isRealize)
+      line.setAttribute('marker-end','url(#arr-inherit)');
+    else if (isAssoc)
+      line.setAttribute('marker-end','url(#arr-assoc)');
+    else if (isDep)
+      line.setAttribute('marker-end','url(#arr-depend)');
+
+    svgEl.appendChild(line);
+
+    // label
+    if (r.label) {
+      const mx = (p1.x + p2.x) / 2;
+      const my = (p1.y + p2.y) / 2;
+      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x', mx); txt.setAttribute('y', my - 4);
+      txt.setAttribute('text-anchor','middle');
+      txt.setAttribute('font-size','9.5');
+      txt.setAttribute('font-family','Segoe UI,Arial,sans-serif');
+      txt.setAttribute('fill','#e0e0f0');
+      txt.setAttribute('paint-order','stroke');
+      txt.setAttribute('stroke','#1a1a2e');
+      txt.setAttribute('stroke-width','3');
+      txt.setAttribute('stroke-linejoin','round');
+      txt.textContent = r.label;
+      svgEl.appendChild(txt);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CANVAS PAN + ZOOM
+// ═══════════════════════════════════════════════════════════════
+let scale = 0.7, tx = 40, ty = 60;
+let panning = false, px0, py0, tx0, ty0;
+
+function applyTransform() {
+  canvas.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+  document.getElementById('zoom-val').textContent = Math.round(scale*100)+'%';
+}
+
+function zoomBy(delta) {
+  const vw = viewport.clientWidth/2, vh = viewport.clientHeight/2;
+  const prev = scale;
+  scale = Math.min(3, Math.max(0.15, scale + delta));
+  const r = scale/prev;
+  tx = vw - r*(vw - tx);
+  ty = vh - r*(vh - ty);
+  applyTransform();
+}
+
+function resetView() { scale=0.7; tx=40; ty=60; applyTransform(); }
+
+function fitAll() {
+  const xs = CLASSES.map(d=>d.x);
+  const ys = CLASSES.map(d=>d.y);
+  const x2 = CLASSES.map(d=>d.x+(nodeMap[d.id]?.el.offsetWidth||200));
+  const y2 = CLASSES.map(d=>d.y+(nodeMap[d.id]?.el.offsetHeight||150));
+  const minX=Math.min(...xs), minY=Math.min(...ys);
+  const maxX=Math.max(...x2), maxY=Math.max(...y2);
+  const vw=viewport.clientWidth, vh=viewport.clientHeight;
+  const pad=60;
+  const sw=(vw-pad*2)/(maxX-minX), sh=(vh-pad*2)/(maxY-minY);
+  scale=Math.min(sw,sh,1);
+  tx=pad - minX*scale;
+  ty=pad - minY*scale;
+  applyTransform();
+}
+
+viewport.addEventListener('mousedown', e => {
+  if (e.button===1 || (e.button===0 && !e.target.closest('.uml-class'))) {
+    panning=true; px0=e.clientX; py0=e.clientY; tx0=tx; ty0=ty;
+    viewport.classList.add('grabbing');
+    e.preventDefault();
+  }
+});
+window.addEventListener('mousemove', e => {
+  if (!panning) return;
+  tx = tx0 + (e.clientX-px0);
+  ty = ty0 + (e.clientY-py0);
+  applyTransform();
+});
+window.addEventListener('mouseup', () => { panning=false; viewport.classList.remove('grabbing'); });
+
+viewport.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect=viewport.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const prev=scale;
+  const delta=e.deltaY<0 ? 0.1 : -0.1;
+  scale=Math.min(3,Math.max(0.15,scale+delta));
+  const r=scale/prev;
+  tx=mx-r*(mx-tx); ty=my-r*(my-ty);
+  applyTransform();
+},{passive:false});
+
+// Touch pinch
+let lastDist=null;
+viewport.addEventListener('touchstart', e => {
+  if (e.touches.length===2) lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+},{passive:true});
+viewport.addEventListener('touchmove', e => {
+  if (e.touches.length===2 && lastDist) {
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    zoomBy((d-lastDist)*0.005); lastDist=d;
+  }
+},{passive:true});
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+CLASSES.forEach(makeClass);
+applyTransform();
+// wait for layout
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    drawArrows();
+  });
+});
+</script>
+</body>
+</html>
